@@ -1,0 +1,66 @@
+services:
+  distributedtest:
+    image: ${DOCKER_REGISTRY-}distributedtest
+    build:
+      context: ./src/DistributedTest
+      dockerfile: Dockerfile
+    ports:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Redis: redis:6379
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=DistributedTest;Username=postgres;Password=postgres
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - distributed-test-network
+
+  redis:
+    container_name: redis
+    image: redis:alpine
+    hostname: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - distributed-test-network
+
+  postgres:
+    container_name: postgres
+    image: postgres:14.4
+    hostname: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: DistributedTest
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/postgres/docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d DistributedTest"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - distributed-test-network
+
+volumes:
+  postgres-data:
+
+networks:
+  distributed-test-network:
