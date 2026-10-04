@@ -1,6 +1,5 @@
-﻿namespace DistributedTest;
+﻿namespace DistributedTest.Services;
 
-using DistributedTest.Services;
 using Microsoft.Extensions.Caching.Hybrid;
 using Npgsql;
 

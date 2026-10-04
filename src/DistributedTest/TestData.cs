@@ -1,12 +1,12 @@
 namespace DistributedTest;
 
-public sealed class TestData
+public sealed record TestData
 {
-    public long Id { get; set; }
+    public long Id { get; init; }
 
-    public string Value { get; set; } = null!;
+    public string Value { get; init; } = null!;
 
-    public int Number { get; set; }
+    public int Number { get; init; }
 
-    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; init; }
 }

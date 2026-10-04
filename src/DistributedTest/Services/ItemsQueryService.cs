@@ -4,11 +4,11 @@ using Dapper;
 using Microsoft.Extensions.Caching.Hybrid;
 using Npgsql;
 
-public class ItemsQueryService
+public sealed class ItemsQueryService
 {
     private readonly HybridCache _hybridCache;
     private readonly NpgsqlDataSource _dataSource;
-    private readonly HybridCacheEntryOptions _options = new()
+    private static readonly HybridCacheEntryOptions _options = new()
     {
         Expiration = TimeSpan.FromMinutes(5),
         LocalCacheExpiration = TimeSpan.FromMinutes(5)
@@ -33,5 +33,7 @@ public class ItemsQueryService
 
         return await connection.QueryAsync<TestData>(new CommandDefinition(sql, cancellationToken: ct));
     },
-    _options, cancellationToken: cancellationToken);
+    _options,
+    tags: ["items"],
+    cancellationToken);
 }

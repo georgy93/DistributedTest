@@ -37,11 +37,11 @@ public static class ServiceCollectionExtensions
                 .WithSerializer(new FusionCacheSystemTextJsonSerializer(jsonOptions))
                 .WithDistributedCache(new RedisCache(new RedisCacheOptions
                 {
-                    Configuration = configuration.GetConnectionString("Redis")
+                    Configuration = configuration.GetConnectionString("Redis") ?? throw new InvalidOperationException("Redis connection string is missing.")
                 }))
                 .WithBackplane(new RedisBackplane(new RedisBackplaneOptions
                 {
-                    Configuration = configuration.GetConnectionString("Redis")
+                    Configuration = configuration.GetConnectionString("Redis") ?? throw new InvalidOperationException("Redis connection string is missing.")
                 }))
                 .AsHybridCache();
 
