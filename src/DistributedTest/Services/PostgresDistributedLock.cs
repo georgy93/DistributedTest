@@ -17,6 +17,7 @@ public sealed class PostgresDistributedLock : IDistributedLock
         var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
+
         command.Transaction = transaction;
         command.CommandText = """SELECT pg_try_advisory_xact_lock(hashtext(@namespace)::bigint);""";
         command.Parameters.AddWithValue("namespace", lockNamespace);
@@ -34,27 +35,18 @@ public sealed class PostgresDistributedLock : IDistributedLock
         return new PostgresDistributedLockHandle(connection, transaction);
     }
 
-    private sealed class PostgresDistributedLockHandle : IAsyncDisposable
+    private sealed class PostgresDistributedLockHandle(NpgsqlConnection Connection, NpgsqlTransaction Transaction) : IAsyncDisposable
     {
-        private readonly NpgsqlConnection _connection;
-        private readonly NpgsqlTransaction _transaction;
-
-        public PostgresDistributedLockHandle(NpgsqlConnection connection, NpgsqlTransaction transaction)
-        {
-            _connection = connection;
-            _transaction = transaction;
-        }
-
-        public async ValueTask DisposeAsync()
+        async ValueTask IAsyncDisposable.DisposeAsync()
         {
             try
             {
-                await _transaction.RollbackAsync();
+                await Transaction.RollbackAsync();
             }
             finally
             {
-                await _transaction.DisposeAsync();
-                await _connection.DisposeAsync();
+                await Transaction.DisposeAsync();
+                await Connection.DisposeAsync();
             }
         }
     }
